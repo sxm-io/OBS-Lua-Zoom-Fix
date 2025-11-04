@@ -1,6 +1,10 @@
 # OBS-Lua-Zoom-Fix
 
+**✓ Fixed for OBS Studio 30.x and later**
+
 A fixed and updated version of the OBS Zoom to Mouse script, compatible with the latest OBS Studio versions.
+
+> **Quick Start**: [Download obs-zoom-to-mouse.lua](obs-zoom-to-mouse.lua) → OBS → Tools → Scripts → + → Done! See [QUICKSTART.md](QUICKSTART.md) for details.
 
 ## About
 
