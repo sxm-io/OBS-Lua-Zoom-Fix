@@ -2,6 +2,29 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.0.0] - 2024-11-04
+
+### Changed
+- **BREAKING**: Updated to use OBS 30.x API exclusively - no longer compatible with OBS 29.x
+- Replaced deprecated `obs_sceneitem_get_info()` and `obs_sceneitem_set_info()` with individual getter/setter functions
+- Replaced `obs.obs_transform_info()` with manual structure creation using individual API calls
+
+### Fixed
+- Fixed "attempt to call field 'obs_sceneitem_get_info' (a nil value)" error in OBS 30.x
+- Fixed bug where `obs_sceneitem_get_info` was called instead of `obs_sceneitem_set_info` when restoring transform
+
+### Technical Details
+OBS 30.x removed the deprecated scene item transform functions. The new API uses:
+- `obs_sceneitem_get_pos()` / `obs_sceneitem_set_pos()`
+- `obs_sceneitem_get_scale()` / `obs_sceneitem_set_scale()`
+- `obs_sceneitem_get_bounds()` / `obs_sceneitem_set_bounds()`
+- `obs_sceneitem_get_rot()` / `obs_sceneitem_set_rot()`
+- `obs_sceneitem_get_alignment()` / `obs_sceneitem_set_alignment()`
+- `obs_sceneitem_get_bounds_type()` / `obs_sceneitem_set_bounds_type()`
+- `obs_sceneitem_get_bounds_alignment()` / `obs_sceneitem_set_bounds_alignment()`
+
+---
+
 ## [1.0.3] - 2024-11-04
 
 ### Fixed

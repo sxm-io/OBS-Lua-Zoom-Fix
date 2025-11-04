@@ -6,7 +6,7 @@
 
 local obs = obslua
 local ffi = require("ffi")
-local VERSION = "1.0.3"
+local VERSION = "2.0.0"
 local CROP_FILTER_NAME = "obs-zoom-to-mouse-crop"
 
 local socket_available, socket = pcall(require, "ljsocket")
@@ -455,7 +455,13 @@ function release_sceneitem()
 
         if sceneitem_info_orig ~= nil then
             log("Transform info reset back to original")
-            obs.obs_sceneitem_get_info(sceneitem, sceneitem_info_orig)
+            obs.obs_sceneitem_set_pos(sceneitem, sceneitem_info_orig.pos)
+            obs.obs_sceneitem_set_scale(sceneitem, sceneitem_info_orig.scale)
+            obs.obs_sceneitem_set_bounds(sceneitem, sceneitem_info_orig.bounds)
+            obs.obs_sceneitem_set_rot(sceneitem, sceneitem_info_orig.rot)
+            obs.obs_sceneitem_set_alignment(sceneitem, sceneitem_info_orig.alignment)
+            obs.obs_sceneitem_set_bounds_type(sceneitem, sceneitem_info_orig.bounds_type)
+            obs.obs_sceneitem_set_bounds_alignment(sceneitem, sceneitem_info_orig.bounds_alignment)
             sceneitem_info_orig = nil
         end
 
@@ -580,14 +586,42 @@ function refresh_sceneitem(find_newest)
 
     if sceneitem ~= nil then
         -- Capture the original settings so we can restore them later
-        sceneitem_info_orig = obs.obs_transform_info()
-        obs.obs_sceneitem_get_info(sceneitem, sceneitem_info_orig)
+        sceneitem_info_orig = {
+            pos = obs.vec2(),
+            scale = obs.vec2(),
+            bounds = obs.vec2(),
+            rot = 0,
+            alignment = 0,
+            bounds_type = 0,
+            bounds_alignment = 0
+        }
+        obs.obs_sceneitem_get_pos(sceneitem, sceneitem_info_orig.pos)
+        obs.obs_sceneitem_get_scale(sceneitem, sceneitem_info_orig.scale)
+        obs.obs_sceneitem_get_bounds(sceneitem, sceneitem_info_orig.bounds)
+        sceneitem_info_orig.rot = obs.obs_sceneitem_get_rot(sceneitem)
+        sceneitem_info_orig.alignment = obs.obs_sceneitem_get_alignment(sceneitem)
+        sceneitem_info_orig.bounds_type = obs.obs_sceneitem_get_bounds_type(sceneitem)
+        sceneitem_info_orig.bounds_alignment = obs.obs_sceneitem_get_bounds_alignment(sceneitem)
 
         sceneitem_crop_orig = obs.obs_sceneitem_crop()
         obs.obs_sceneitem_get_crop(sceneitem, sceneitem_crop_orig)
 
-        sceneitem_info = obs.obs_transform_info()
-        obs.obs_sceneitem_get_info(sceneitem, sceneitem_info)
+        sceneitem_info = {
+            pos = obs.vec2(),
+            scale = obs.vec2(),
+            bounds = obs.vec2(),
+            rot = 0,
+            alignment = 0,
+            bounds_type = 0,
+            bounds_alignment = 0
+        }
+        obs.obs_sceneitem_get_pos(sceneitem, sceneitem_info.pos)
+        obs.obs_sceneitem_get_scale(sceneitem, sceneitem_info.scale)
+        obs.obs_sceneitem_get_bounds(sceneitem, sceneitem_info.bounds)
+        sceneitem_info.rot = obs.obs_sceneitem_get_rot(sceneitem)
+        sceneitem_info.alignment = obs.obs_sceneitem_get_alignment(sceneitem)
+        sceneitem_info.bounds_type = obs.obs_sceneitem_get_bounds_type(sceneitem)
+        sceneitem_info.bounds_alignment = obs.obs_sceneitem_get_bounds_alignment(sceneitem)
 
         sceneitem_crop = obs.obs_sceneitem_crop()
         obs.obs_sceneitem_get_crop(sceneitem, sceneitem_crop)
@@ -638,7 +672,9 @@ function refresh_sceneitem(find_newest)
             sceneitem_info.bounds.x = source_width * sceneitem_info.scale.x
             sceneitem_info.bounds.y = source_height * sceneitem_info.scale.y
 
-            obs.obs_sceneitem_set_info(sceneitem, sceneitem_info)
+            obs.obs_sceneitem_set_bounds_type(sceneitem, sceneitem_info.bounds_type)
+            obs.obs_sceneitem_set_bounds_alignment(sceneitem, sceneitem_info.bounds_alignment)
+            obs.obs_sceneitem_set_bounds(sceneitem, sceneitem_info.bounds)
 
             log("WARNING: Found existing non-boundingbox transform. This may cause issues with zooming.\n" ..
                 "         Settings have been auto converted to a bounding box scaling transfrom instead.\n" ..
