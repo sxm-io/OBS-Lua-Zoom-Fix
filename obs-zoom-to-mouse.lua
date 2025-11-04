@@ -356,10 +356,10 @@ function get_monitor_info(source)
                         local width, height = found:match("(%d+)x(%d+)")
 
                         info = { x = 0, y = 0, width = 0, height = 0 }
-                        info.x = tonumber(x, 10)
-                        info.y = tonumber(y, 10)
-                        info.width = tonumber(width, 10)
-                        info.height = tonumber(height, 10)
+                        info.x = tonumber(x, 10) or 0
+                        info.y = tonumber(y, 10) or 0
+                        info.width = tonumber(width, 10) or 0
+                        info.height = tonumber(height, 10) or 0
                         info.scale_x = 1
                         info.scale_y = 1
                         info.display_width = info.width
