@@ -7,31 +7,32 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 - **Version parsing improvements**: Rewrote version detection to properly handle OBS 30.x and later versions
   - Changed from parsing version as "XX.Y" format to properly extracting major, minor, and patch numbers
-  - Fixed version comparison logic that was using floating-point arithmetic incorrectly
-  - Now correctly handles version strings like "30.0.0", "30.2.1-beta1", etc.
+  - Fixed version comparison logic using integer math (major * 100 + minor) instead of floating-point arithmetic
+  - Now correctly handles version strings like "30.0.0", "30.0", "30.2.1-beta1", etc.
+  - Avoids floating-point precision issues in version comparisons
 
 - **macOS compatibility**: Fixed screen_capture detection for OBS 29.1+ and OBS 30+
-  - Updated version check from `major > 29.0` to `version_number >= 29.1`
+  - Updated version check from `major > 29.0` to `version_number >= 2901` (integer comparison)
   - Ensures proper source type selection on modern OBS versions
 
 - **Script cleanup**: Fixed version check in script_unload function
-  - Now properly compares version numbers for safe cleanup in OBS 29.1.3+
+  - Now properly compares version numbers using integers for safe cleanup in OBS 29.1.3+
   - Prevents crashes on script reload/unload
 
 ### Changed
 - Updated version to 1.0.3
 - Improved debug logging to show full parsed version information
-- Better version comparison using calculated version_number
+- Better version comparison using calculated version_number (integer-based)
 
 ### Technical Details
 The main issue was in how version numbers were parsed and compared:
-- **Old**: `major` was set to something like "29.1" or "30.0" (as a string matched pattern)
-- **New**: `major`, `minor`, `patch` are proper integer values, with `version_number` for comparisons
+- **Old**: `major` was set to something like "29.1" or "30.0" (as a string matched pattern), comparisons used floating-point
+- **New**: `major`, `minor`, `patch` are proper integer values, with `version_number = major * 100 + minor` for comparisons
 
 This ensures compatibility with:
 - OBS Studio 30.x (latest versions)
 - OBS Studio 29.x (all versions)
-- Future OBS releases
+- Future OBS releases (31.x, 32.x, etc.)
 
 ---
 

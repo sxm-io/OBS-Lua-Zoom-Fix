@@ -84,13 +84,14 @@ local zoom_state = ZoomState.None
 
 local version = obs.obs_get_version_string()
 -- Parse version string to extract major, minor, patch numbers
--- Handles formats like "30.0.0", "29.1.3", "30.2.1-beta1" etc.
-local major_num, minor_num, patch_num = version:match("(%d+)%.(%d+)%.(%d+)")
+-- Handles formats like "30.0.0", "29.1.3", "30.2.1-beta1", "30.0" etc.
+local major_num, minor_num, patch_num = version:match("(%d+)%.(%d+)%.?(%d*)")
 local major = tonumber(major_num) or 0
 local minor = tonumber(minor_num) or 0
 local patch = tonumber(patch_num) or 0
--- Create a comparable version number (e.g., 30.0.0 becomes 30.0)
-local version_number = major + (minor / 10)
+-- Create a comparable version number using integer math to avoid floating-point issues
+-- (e.g., 30.0.0 becomes 3000, 29.1.3 becomes 2901)
+local version_number = major * 100 + minor
 
 -- Define the mouse cursor functions for each platform
 if ffi.os == "Windows" then
@@ -217,7 +218,7 @@ function get_dc_info()
         }
     elseif ffi.os == "OSX" then
         -- OBS 29.1+ uses screen_capture instead of display_capture on macOS
-        if version_number >= 29.1 then
+        if version_number >= 2901 then  -- 29.1.0 or later
             return {
                 source_id = "screen_capture",
                 prop_id = "display_uuid",
@@ -1413,7 +1414,7 @@ function script_unload()
 
     -- Clean up the memory usage
     -- OBS versions 29.1.2 and below seem to crash if we do cleanup, so skip for those versions
-    if version_number > 29.1 or (version_number == 29.1 and patch > 2) then
+    if version_number > 2901 or (version_number == 2901 and patch > 2) then  -- 29.1.3 or later
         local transitions = obs.obs_frontend_get_transitions()
         if transitions ~= nil then
             for i, s in pairs(transitions) do

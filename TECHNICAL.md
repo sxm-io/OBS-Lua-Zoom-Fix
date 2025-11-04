@@ -40,27 +40,31 @@ local minor = tonumber(m2) or 0
 ```lua
 local version = obs.obs_get_version_string()
 -- Parse version string to extract major, minor, patch numbers
--- Handles formats like "30.0.0", "29.1.3", "30.2.1-beta1" etc.
-local major_num, minor_num, patch_num = version:match("(%d+)%.(%d+)%.(%d+)")
+-- Handles formats like "30.0.0", "29.1.3", "30.2.1-beta1", "30.0" etc.
+local major_num, minor_num, patch_num = version:match("(%d+)%.(%d+)%.?(%d*)")
 local major = tonumber(major_num) or 0
 local minor = tonumber(minor_num) or 0
 local patch = tonumber(patch_num) or 0
--- Create a comparable version number (e.g., 30.0.0 becomes 30.0)
-local version_number = major + (minor / 10)
+-- Create a comparable version number using integer math to avoid floating-point issues
+-- (e.g., 30.0.0 becomes 3000, 29.1.3 becomes 2901)
+local version_number = major * 100 + minor
 ```
 
 **Improvements**:
 - Properly extracts major, minor, and patch as separate integers
-- Creates `version_number` for reliable comparisons (e.g., 30.0, 29.1, 29.0)
-- Handles beta/RC versions by ignoring suffix after third number
+- Creates `version_number` using integer math (major * 100 + minor) to avoid floating-point precision issues
+- Handles version strings with optional patch component (e.g., "30.0" or "30.0.0")
+- Handles beta/RC versions by ignoring suffix after version numbers
 - Clear variable naming matches semantic meaning
 
 **Examples**:
 | Version String | major | minor | patch | version_number |
 |---------------|-------|-------|-------|----------------|
-| "29.1.3"      | 29    | 1     | 3     | 29.1           |
-| "30.0.0"      | 30    | 0     | 0     | 30.0           |
-| "30.2.1-beta1"| 30    | 2     | 1     | 30.2           |
+| "29.1.3"      | 29    | 1     | 3     | 2901           |
+| "30.0.0"      | 30    | 0     | 0     | 3000           |
+| "30.0"        | 30    | 0     | 0     | 3000           |
+| "30.2.1-beta1"| 30    | 2     | 1     | 3002           |
+| "29.10.0"     | 29    | 10    | 0     | 2910           |
 
 ### 2. Fixed macOS Source Detection
 
@@ -91,7 +95,7 @@ end
 ```lua
 elseif ffi.os == "OSX" then
     -- OBS 29.1+ uses screen_capture instead of display_capture on macOS
-    if version_number >= 29.1 then
+    if version_number >= 2901 then  -- 29.1.0 or later
         return {
             source_id = "screen_capture",
             prop_id = "display_uuid",
@@ -108,9 +112,10 @@ end
 ```
 
 **Improvements**:
-- Uses `version_number` for clean comparison
+- Uses `version_number` (integer comparison) instead of floating-point
 - Clear comment explaining when `screen_capture` is used
 - Properly handles OBS 29.1.0+ and all 30.x versions
+- Avoids floating-point precision issues
 
 ### 3. Fixed Script Cleanup Version Check
 
@@ -127,14 +132,14 @@ if major > 29.1 or (major == 29.1 and minor > 2) then
 **New Code:**
 ```lua
 -- OBS versions 29.1.2 and below seem to crash if we do cleanup, so skip for those versions
-if version_number > 29.1 or (version_number == 29.1 and patch > 2) then
+if version_number > 2901 or (version_number == 2901 and patch > 2) then  -- 29.1.3 or later
 ```
 
 **Improvements**:
 - Clear comment explaining the version requirement
-- Uses `version_number` for main comparison
+- Uses `version_number` (integer) for main comparison
 - Uses `patch` (not `minor`) for the detailed check
-- More reliable floating-point comparison
+- Integer-based comparison avoids floating-point precision issues
 
 ### 4. Improved Debug Logging
 
@@ -247,26 +252,23 @@ Monitor for:
 
 ### Version Detection Edge Cases
 Current regex handles:
-- ✓ `"30.0.0"`
-- ✓ `"30.2.1-beta1"`
-- ✓ `"29.1.3"`
-- ✗ `"30.0"` (missing patch - would fail)
-- ✗ `"30"` (too short - would fail)
+- ✓ `"30.0.0"` → 3000
+- ✓ `"30.0"` → 3000  
+- ✓ `"30.2.1-beta1"` → 3002
+- ✓ `"29.1.3"` → 2901
+- ✓ `"29.10.0"` → 2910
+- ✗ `"30"` (too short - would fail, but OBS doesn't use this format)
 
-If OBS changes version format, update pattern:
-```lua
--- More lenient pattern (allows missing patch):
-local major_num, minor_num, patch_num = version:match("(%d+)%.(%d+)%.?(%d*)")
-local patch = tonumber(patch_num) or 0
-```
+The pattern `(%d+)%.(%d+)%.?(%d*)` makes the patch component optional, handling both "X.Y.Z" and "X.Y" formats.
 
 ### macOS Version Threshold
-Currently: OBS 29.1+ uses `screen_capture`
+Currently: OBS 29.1+ (version_number >= 2901) uses `screen_capture`
 
 If threshold changes:
 1. Update `get_dc_info()` function
-2. Update comment explaining threshold
-3. Test on affected macOS + OBS versions
+2. Update the numeric threshold (e.g., 2901 to new value)
+3. Update comment explaining threshold
+4. Test on affected macOS + OBS versions
 
 ## Verification Checklist
 
