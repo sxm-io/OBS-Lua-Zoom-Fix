@@ -1,0 +1,17 @@
+# OBS Lua Script - No build artifacts needed
+# But we might want to ignore some common files
+
+# Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Backup files
+*.bak
+*.backup
